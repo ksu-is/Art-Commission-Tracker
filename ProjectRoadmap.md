@@ -1,0 +1,3 @@
+- [x] Create README
+- [x] Look for a related repository and evaluate
+- [ ] Start sprint 2
