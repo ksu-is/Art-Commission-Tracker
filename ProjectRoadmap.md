@@ -2,3 +2,4 @@
 - [x] Look for a related repository and evaluate
 - [ ] Add starting code
 - [ ] Start sprint 2
+- [ ] Add pricing feature
