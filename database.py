@@ -4,6 +4,7 @@ DB_NAME = "commissions.db"
 def get_connection():
     return sqlite3.connect(DB_NAME)
 
+#initialize_database function creates the database that will store all commissions 
 def initialize_database():
     conn = get_connection()
     cursor = conn.cursor()
@@ -22,6 +23,7 @@ def initialize_database():
     conn.commit()
     conn.close()
 
+#add_commission function takes in the commission info and adds a commission to the database 
 def add_commission(client, title, type_, price, deadline, status, notes):
     conn = get_connection()
     cursor = conn.cursor()
@@ -32,3 +34,11 @@ def add_commission(client, title, type_, price, deadline, status, notes):
     conn.commit()
     conn.close()
 
+#get_commission returns one commission by its unique ID
+def get_commission(comm_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM commissions WHERE id = ?", (comm_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row
