@@ -5,3 +5,4 @@ An art commission tracker that can help freelance artists with the organization 
 - Deleting commissions
 - Commission organization
 - Commission statistics
+- Calculating commission pricing
