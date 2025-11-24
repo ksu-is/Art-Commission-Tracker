@@ -21,3 +21,14 @@ def initialize_database():
     """)
     conn.commit()
     conn.close()
+
+def add_commission(client, title, type_, price, deadline, status, notes):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO commissions (client, title, type, price, deadline, status, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (client, title, type_, price, deadline, status, notes))
+    conn.commit()
+    conn.close()
+
