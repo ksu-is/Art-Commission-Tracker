@@ -54,3 +54,11 @@ def update_commission(comm_id, client, title, type_, price, deadline, status, no
     """, (client, title, type_, price, deadline, status, notes, comm_id))
     conn.commit()
     conn.close()
+
+#delete_commission gets a commission according to its ID and deletes it from the database
+def delete_commission(comm_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM commissions WHERE id = ?", (comm_id,))
+    conn.commit()
+    conn.close()
