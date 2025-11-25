@@ -42,3 +42,15 @@ def get_commission(comm_id):
     row = cursor.fetchone()
     conn.close()
     return row
+
+#update_commission updates/overwrites the information for a specific commission
+def update_commission(comm_id, client, title, type_, price, deadline, status, notes):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE commissions
+        SET client=?, title=?, type=?, price=?, deadline=?, status=?, notes=?
+        WHERE id=?
+    """, (client, title, type_, price, deadline, status, notes, comm_id))
+    conn.commit()
+    conn.close()
