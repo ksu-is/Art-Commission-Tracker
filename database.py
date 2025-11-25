@@ -4,7 +4,7 @@ DB_NAME = "commissions.db"
 def get_connection():
     return sqlite3.connect(DB_NAME)
 
-#initialize_database function creates the database that will store all commissions 
+# initialize_database function creates the database that will store all commissions 
 def initialize_database():
     conn = get_connection()
     cursor = conn.cursor()
@@ -23,7 +23,7 @@ def initialize_database():
     conn.commit()
     conn.close()
 
-#add_commission function takes in the commission info and adds a commission to the database 
+# add_commission function takes in the commission info and adds a commission to the database 
 def add_commission(client, title, type_, price, deadline, status, notes):
     conn = get_connection()
     cursor = conn.cursor()
@@ -34,8 +34,8 @@ def add_commission(client, title, type_, price, deadline, status, notes):
     conn.commit()
     conn.close()
 
-#get_commission returns one commission by its unique ID
-def get_commission(comm_id):
+# get_commission returns one commission by its unique ID
+def get_commission_by_id(comm_id):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM commissions WHERE id = ?", (comm_id,))
@@ -43,7 +43,7 @@ def get_commission(comm_id):
     conn.close()
     return row
 
-#update_commission updates/overwrites the information for a specific commission
+# update_commission updates/overwrites the information for a specific commission
 def update_commission(comm_id, client, title, type_, price, deadline, status, notes):
     conn = get_connection()
     cursor = conn.cursor()
@@ -55,7 +55,7 @@ def update_commission(comm_id, client, title, type_, price, deadline, status, no
     conn.commit()
     conn.close()
 
-#delete_commission gets a commission according to its ID and deletes it from the database
+# delete_commission gets a commission according to its ID and deletes it from the database
 def delete_commission(comm_id):
     conn = get_connection()
     cursor = conn.cursor()
@@ -63,7 +63,7 @@ def delete_commission(comm_id):
     conn.commit()
     conn.close()
 
-#mark_complete takes a commission according to its ID and updates its status column in the database
+# mark_complete takes a commission according to its ID and updates its status column in the database
 def mark_complete(comm_id):
     conn = get_connection()
     cursor = conn.cursor()
@@ -71,6 +71,7 @@ def mark_complete(comm_id):
     conn.commit()
     conn.close()
 
+# get_commissions_by_status grabs commissions that matches a certain status
 def get_commissions_by_status(status):
     conn = get_connection()
     cursor = conn.cursor()
@@ -79,6 +80,7 @@ def get_commissions_by_status(status):
     conn.close()
     return rows
 
+# get_commissions_sorted_by_deadline grabs all commissions and sorts them by the earliest deadline to the latest deadline
 def get_commissions_sorted_by_deadline():
     conn = get_connection()
     cursor = conn.cursor()
@@ -86,3 +88,19 @@ def get_commissions_sorted_by_deadline():
     rows = cursor.fetchall()
     conn.close()
     return rows  
+
+# get_summary calculates total comissions, completed comissions, and total income
+def get_summary():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM commissions")
+    total = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM commissions WHERE status='Completed'")
+    completed = cursor.fetchone()[0]
+    cursor.execute("SELECT SUM(price) FROM commissions WHERE status='Completed'")
+    income = cursor.fetchone()[0] or 0
+    conn.close()
+    return total, completed, income
+
+# Initialize
+initialize_database()
