@@ -8,4 +8,7 @@ This is an art commission tracker that can help freelance artists with the organ
 - Commission statistics
 - Calculating commission pricing
 
+## License
+MIT License - see [LICENSE](LICENSE) file.
+
 **This project was created with the use of AI**
