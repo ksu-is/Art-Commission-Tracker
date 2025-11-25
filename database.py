@@ -63,10 +63,26 @@ def delete_commission(comm_id):
     conn.commit()
     conn.close()
 
-#mark_complete takes a commission according to its ID and updates its status  column in the database
+#mark_complete takes a commission according to its ID and updates its status column in the database
 def mark_complete(comm_id):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE commissions SET status = 'Completed' WHERE id = ?", (comm_id,))
     conn.commit()
     conn.close()
+
+def get_commissions_by_status(status):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM commissions WHERE status = ?", (status,))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+def get_commissions_sorted_by_deadline():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM commissions ORDER BY deadline ASC")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows  
