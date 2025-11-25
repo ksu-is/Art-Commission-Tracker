@@ -62,3 +62,11 @@ def delete_commission(comm_id):
     cursor.execute("DELETE FROM commissions WHERE id = ?", (comm_id,))
     conn.commit()
     conn.close()
+
+#mark_complete takes a commission according to its ID and updates its status  column in the database
+def mark_complete(comm_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE commissions SET status = 'Completed' WHERE id = ?", (comm_id,))
+    conn.commit()
+    conn.close()
