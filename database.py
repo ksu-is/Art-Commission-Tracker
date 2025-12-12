@@ -80,27 +80,59 @@ def get_commissions_by_status(status):
     conn.close()
     return rows
 
-# get_commissions_sorted_by_deadline grabs all commissions and sorts them by the earliest deadline to the latest deadline
-def get_commissions_sorted_by_deadline():
+def get_commissions(status=None, sort_by="deadline"):
+    """
+    status: None or "All" or one of STATUS_OPTIONS
+    sort_by: one of: id, client, title, type, price, deadline, status
+    """
+    allowed = {
+        "id": "id",
+        "client": "client COLLATE NOCASE",
+        "title": "title COLLATE NOCASE",
+        "type": "type COLLATE NOCASE",
+        "price": "price",
+        "deadline": "deadline",
+        "status": "status COLLATE NOCASE",
+    }
+
+    order_clause = allowed.get(sort_by, "deadline")
+
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM commissions ORDER BY deadline ASC")
+
+    if status is None or status == "All":
+        cursor.execute(f"SELECT * FROM commissions ORDER BY {order_clause} ASC")
+    else:
+        cursor.execute(f"SELECT * FROM commissions WHERE status = ? ORDER BY {order_clause} ASC", (status,))
+
     rows = cursor.fetchall()
     conn.close()
-    return rows  
+    return rows
+
 
 # get_summary calculates total comissions, completed comissions, and total income
 def get_summary():
     conn = get_connection()
     cursor = conn.cursor()
+
     cursor.execute("SELECT COUNT(*) FROM commissions")
     total = cursor.fetchone()[0]
+
     cursor.execute("SELECT COUNT(*) FROM commissions WHERE status='Completed'")
     completed = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM commissions WHERE status='In Progress'")
+    in_progress = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM commissions WHERE status='Not Started'")
+    not_started = cursor.fetchone()[0]
+
     cursor.execute("SELECT SUM(price) FROM commissions WHERE status='Completed'")
     income = cursor.fetchone()[0] or 0
+
     conn.close()
-    return total, completed, income
+    return total, completed, in_progress, not_started, income
+
 
 # Initialize
 initialize_database()
