@@ -139,6 +139,20 @@ class App:
         status_menu.pack(side="left", padx=5)
         status_menu.bind("<<ComboboxSelected>>", lambda e: self.refresh_table())
 
+        tk.Label(top_frame, text="   Sort by:").pack(side="left")
+
+        self.sort_var = tk.StringVar(value="deadline")
+        sort_options = ["deadline", "client", "price", "status", "title", "type", "id"]
+        sort_menu = ttk.Combobox(
+            top_frame,
+            textvariable=self.sort_var,
+            values=sort_options,
+            state="readonly",
+            width=12
+        )
+        sort_menu.pack(side="left", padx=5)
+        sort_menu.bind("<<ComboboxSelected>>", lambda e: self.refresh_table())
+
         tk.Button(top_frame, text="Refresh", command=self.refresh_table).pack(side="left", padx=5)
         tk.Button(top_frame, text="Mark Complete", command=self.mark_selected_complete).pack(side="left", padx=5)
         tk.Button(top_frame, text="Edit Selected", command=self.edit_selected).pack(side="left", padx=5)
@@ -156,15 +170,16 @@ class App:
     def refresh_table(self):
         for row in self.tree.get_children():
             self.tree.delete(row)
+
         status = self.status_var.get() if hasattr(self, "status_var") else "All"
-        if status == "All":
-            rows = database.get_commissions_sorted_by_deadline()
-        else:
-            rows = database.get_commissions_by_status(status)
+        sort_by = self.sort_var.get() if hasattr(self, "sort_var") else "deadline"
+
+        rows = database.get_commissions(status=status, sort_by=sort_by)
+
         for r in rows:
-            # r = (id, client, title, type, price, deadline, status, notes)
             price_display = f"${r[4]:.2f}" if r[4] is not None else ""
-            self.tree.insert("", "end", values=(r[0], r[1], r[2], r[3], price_display, r[5], r[6]))
+            self.tree.insert("", "end", values=(r[0], r[1], r[2], r[3], price_display, r[5], r[6]))    
+
 
     def get_selected_id(self):
         sel = self.tree.selection()
@@ -196,14 +211,17 @@ class App:
         self.open_add_form(edit_id=cid)
 
     def open_summary(self):
-        total, completed, income = database.get_summary()
+        total, completed, in_progress, not_started, income = database.get_summary()
+
         summary_win = tk.Toplevel(self.root)
         summary_win.title("Summary Dashboard")
-        summary_win.geometry("350x200")
-        tk.Label(summary_win, text=f"Total Commissions: {total}", font=("Arial", 12)).pack(pady=8)
-        tk.Label(summary_win, text=f"Completed Commissions: {completed}", font=("Arial", 12)).pack(pady=8)
-        tk.Label(summary_win, text=f"Total Income (Completed): ${income:.2f}", font=("Arial", 12)).pack(pady=8)
-        tk.Button(summary_win, text="Export Summary CSV", command=self.export_csv).pack(pady=10)
+        summary_win.geometry("350x260")
+
+        tk.Label(summary_win, text=f"Total Commissions: {total}", font=("Arial", 12)).pack(pady=6)
+        tk.Label(summary_win, text=f"Not Started: {not_started}", font=("Arial", 12)).pack(pady=6)
+        tk.Label(summary_win, text=f"In Progress: {in_progress}", font=("Arial", 12)).pack(pady=6)
+        tk.Label(summary_win, text=f"Completed: {completed}", font=("Arial", 12)).pack(pady=6)
+        tk.Label(summary_win, text=f"Total Income (Completed): ${income:.2f}", font=("Arial", 12)).pack(pady=6)
 
 
 if __name__ == "__main__":
