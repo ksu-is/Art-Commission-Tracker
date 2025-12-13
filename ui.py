@@ -2,6 +2,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import database
 import datetime
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 
 STATUS_OPTIONS = ["Not Started", "In Progress", "Completed"]
 TYPE_OPTIONS = ["Portrait", "Full Body", "Chibi", "Icon", "Other"]
@@ -212,16 +215,41 @@ class App:
 
     def open_summary(self):
         total, completed, in_progress, not_started, income = database.get_summary()
+        income_by_type = database.get_income_by_type()
 
         summary_win = tk.Toplevel(self.root)
         summary_win.title("Summary Dashboard")
-        summary_win.geometry("350x260")
+        summary_win.geometry("500x600")
 
-        tk.Label(summary_win, text=f"Total Commissions: {total}", font=("Arial", 12)).pack(pady=6)
-        tk.Label(summary_win, text=f"Not Started: {not_started}", font=("Arial", 12)).pack(pady=6)
-        tk.Label(summary_win, text=f"In Progress: {in_progress}", font=("Arial", 12)).pack(pady=6)
-        tk.Label(summary_win, text=f"Completed: {completed}", font=("Arial", 12)).pack(pady=6)
-        tk.Label(summary_win, text=f"Total Income (Completed): ${income:.2f}", font=("Arial", 12)).pack(pady=6)
+        # ---- Text stats ----
+        tk.Label(summary_win, text="Summary Dashboard", font=("Arial", 16, "bold")).pack(pady=10)
+
+        tk.Label(summary_win, text=f"Total Commissions: {total}", font=("Arial", 12)).pack(pady=3)
+        tk.Label(summary_win, text=f"Not Started: {not_started}", font=("Arial", 12)).pack(pady=3)
+        tk.Label(summary_win, text=f"In Progress: {in_progress}", font=("Arial", 12)).pack(pady=3)
+        tk.Label(summary_win, text=f"Completed: {completed}", font=("Arial", 12)).pack(pady=3)
+        tk.Label(summary_win, text=f"Total Income (Completed): ${income:.2f}", font=("Arial", 12, "bold")).pack(pady=6)
+
+        # ---- Pie chart section ----
+        chart_frame = tk.Frame(summary_win)
+        chart_frame.pack(fill="both", expand=True, pady=10)
+
+        if not income_by_type:
+            tk.Label(chart_frame, text="No completed commissions to display income chart.",
+                 font=("Arial", 11)).pack(pady=20)
+            return
+
+        labels = [row[0] for row in income_by_type]
+        values = [row[1] for row in income_by_type]
+
+        fig = Figure(figsize=(4.5, 4), dpi=100)
+        ax = fig.add_subplot(111)
+        ax.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
+        ax.set_title("Income by Commission Type")
+
+        canvas = FigureCanvasTkAgg(fig, master=chart_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
 
 
 if __name__ == "__main__":
