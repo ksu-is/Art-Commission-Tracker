@@ -133,6 +133,28 @@ def get_summary():
     conn.close()
     return total, completed, in_progress, not_started, income
 
+# get_income_by_type 
+def get_income_by_type():
+    """
+    Returns [(type, total_income), ...] for Completed commissions only
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT COALESCE(type, 'Other') as type, SUM(price)
+        FROM commissions
+        WHERE status='Completed'
+        GROUP BY COALESCE(type, 'Other')
+        HAVING SUM(price) > 0
+        ORDER BY SUM(price) DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+
 
 # Initialize
 initialize_database()
