@@ -12,12 +12,16 @@
 - [x] Add commission insert function
 - [x] Get commission by ID
 - [x] Update commission
-- [ ] Delete commission
-- [ ] Filter by status and sort by deadline
+- [x] Delete commission
+- [x] Filter by status and sort by deadline
 
 ## Phase 3 — UI Development
-- [ ] Build main menu
+- [x] Build main menu
 - [ ] Add commission form
 - [ ] Connect form to database
 - [ ] Build view table UI
 - [ ] Implement delete and edit buttons
+
+## Phase 4 — Add New Features
+- [ ] Add a Pie Chart
+- [ ] 
