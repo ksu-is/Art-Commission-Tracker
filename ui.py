@@ -1,70 +1,182 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+import customtkinter as ctk
 import database
 import datetime
+
+# matplotlib for pie chart
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-
 STATUS_OPTIONS = ["Not Started", "In Progress", "Completed"]
 TYPE_OPTIONS = ["Portrait", "Full Body", "Chibi", "Icon", "Other"]
+
+CREME = "#F5EFE6"
+CREME_2 = "#EDE3D2"
+BROWN = "#5A3E2B"
+BROWN_DARK = "#3E2A1D"
+ACCENT = "#B08968"
+TEXT_DARK = "#2B1B12"
+
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("blue")  # we override widget colors manually anyway
+
 
 class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Art Commission Tracker")
-        self.root.geometry("800x600")
+        self.root.geometry("900x600")
+        self.root.configure(fg_color=CREME)
+        self.configure_treeview_style()
         self.create_main_menu()
 
+    # Helpers
+    def setup_popup(self, win, w=900, h=600):
+        """Theme + bring window to front."""
+        win.configure(fg_color=CREME)
+        win.geometry(f"{w}x{h}")
+
+        # open in front of root (Windows friendly)
+        win.transient(self.root)
+        win.lift()
+        win.focus_force()
+        win.attributes("-topmost", True)
+        win.after(150, lambda: win.attributes("-topmost", False))
+
+    def themed_button(self, parent, text, cmd, width=140):
+        return ctk.CTkButton(
+            parent,
+            text=text,
+            command=cmd,
+            width=width,
+            height=36,
+            fg_color=BROWN,
+            hover_color=BROWN_DARK,
+            text_color=CREME,
+            corner_radius=14,
+            font=("Arial", 13, "bold"),
+        )
+
+    def configure_treeview_style(self):
+        style = ttk.Style()
+        style.theme_use("clam")
+
+        style.configure(
+            "Treeview",
+            background=CREME_2,
+            fieldbackground=CREME_2,
+            foreground=TEXT_DARK,
+            rowheight=26,
+            bordercolor=BROWN,
+            borderwidth=1,
+        )
+        style.configure(
+            "Treeview.Heading",
+            background=BROWN,
+            foreground=CREME,
+            relief="flat",
+        )
+        style.map("Treeview.Heading", background=[("active", BROWN_DARK)])
+
+    # Main Menu
     def create_main_menu(self):
         for widget in self.root.winfo_children():
             widget.destroy()
 
-        title = tk.Label(self.root, text="Art Commission Tracker", font=("Arial", 24))
-        title.pack(pady=20)
+        container = ctk.CTkFrame(self.root, fg_color=CREME, corner_radius=0)
+        container.pack(fill="both", expand=True, padx=30, pady=30)
 
-        btn_frame = tk.Frame(self.root)
-        btn_frame.pack(pady=10)
+        header = ctk.CTkFrame(container, fg_color=CREME, corner_radius=16)
+        header.pack(fill="x", pady=(0, 20))
 
-        btn_add = tk.Button(btn_frame, text="Add New Commission", width=20, command=self.open_add_form)
-        btn_add.grid(row=0, column=0, padx=10, pady=10)
+        title = ctk.CTkLabel(
+            header,
+            text="Art Commission Tracker",
+            font=("Arial", 60, "bold"),
+            text_color=BROWN_DARK,
+        )
+        title.pack(anchor="w", padx=10, pady=(10, 0))
 
-        btn_view = tk.Button(btn_frame, text="View All Commissions", width=20, command=self.open_view_page)
-        btn_view.grid(row=0, column=1, padx=10, pady=10)
+        subtitle = ctk.CTkLabel(
+            header,
+            text="Your all-in-one solution for managing art commissions with ease",
+            font=("Arial", 14),
+            text_color=BROWN,
+        )
+        subtitle.pack(anchor="w", padx=10, pady=(0, 10))
 
-        btn_summary = tk.Button(btn_frame, text="Summary Report", width=20, command=self.open_summary)
-        btn_summary.grid(row=0, column=2, padx=10, pady=10)
+        card = ctk.CTkFrame(container, fg_color=CREME_2, corner_radius=18)
+        card.pack(fill="both", expand=True, padx=10, pady=10)
 
-        btn_exit = tk.Button(self.root, text="Exit", width=10, command=self.root.destroy)
-        btn_exit.pack(pady=20)
+        btn_grid = ctk.CTkFrame(card, fg_color="transparent")
+        btn_grid.pack(pady=30)
 
+        def styled_btn(text, cmd):
+            return ctk.CTkButton(
+                btn_grid,
+                text=text,
+                command=cmd,
+                width=220,
+                height=42,
+                fg_color=BROWN,
+                hover_color=BROWN_DARK,
+                text_color=CREME,
+                corner_radius=14,
+                font=("Arial", 14, "bold"),
+            )
+
+        styled_btn("Add New Commission", self.open_add_form).grid(row=0, column=0, padx=12, pady=12)
+        styled_btn("View All Commissions", self.open_view_page).grid(row=0, column=1, padx=12, pady=12)
+        styled_btn("Summary Report", self.open_summary).grid(row=1, column=0, padx=12, pady=12)
+        styled_btn("Exit", self.root.destroy).grid(row=1, column=1, padx=12, pady=12)
+
+    # Add/Edit Form
     def open_add_form(self, edit_id=None):
-        self.form = tk.Toplevel(self.root)
+        self.form = ctk.CTkToplevel(self.root)
         self.form.title("Add New Commission" if edit_id is None else "Edit Commission")
-        self.form.geometry("500x550")
+        self.setup_popup(self.form, 650, 520)
+
+        card = ctk.CTkFrame(self.form, fg_color=CREME_2, corner_radius=18)
+        card.pack(fill="both", expand=True, padx=20, pady=20)
+
         labels = ["Client Name", "Title", "Type", "Price ($)", "Deadline (YYYY-MM-DD)", "Status", "Notes"]
         self.entries = {}
 
         for i, label_text in enumerate(labels):
-            label = tk.Label(self.form, text=label_text)
-            label.grid(row=i, column=0, padx=10, pady=5, sticky="w")
+            lab = ctk.CTkLabel(card, text=label_text, text_color=BROWN_DARK, font=("Arial", 13, "bold"))
+            lab.grid(row=i, column=0, padx=12, pady=10, sticky="w")
 
             if label_text == "Notes":
-                entry = tk.Text(self.form, width=40, height=6)
+                entry = ctk.CTkTextbox(card, width=380, height=120, fg_color=CREME, text_color=TEXT_DARK)
             elif label_text == "Type":
-                var = tk.StringVar(value=TYPE_OPTIONS[0])
-                entry = ttk.Combobox(self.form, textvariable=var, values=TYPE_OPTIONS, state="readonly")
+                var = ctk.StringVar(value=TYPE_OPTIONS[0])
+                entry = ctk.CTkComboBox(card, values=TYPE_OPTIONS, variable=var, state="readonly", width=380)
             elif label_text == "Status":
-                var = tk.StringVar(value=STATUS_OPTIONS[0])
-                entry = ttk.Combobox(self.form, textvariable=var, values=STATUS_OPTIONS, state="readonly")
+                var = ctk.StringVar(value=STATUS_OPTIONS[0])
+                entry = ctk.CTkComboBox(card, values=STATUS_OPTIONS, variable=var, state="readonly", width=380)
             else:
-                entry = tk.Entry(self.form, width=40)
+                entry = ctk.CTkEntry(card, width=380, fg_color=CREME, text_color=TEXT_DARK)
 
-            entry.grid(row=i, column=1, padx=10, pady=5)
+            entry.grid(row=i, column=1, padx=12, pady=10, sticky="w")
             self.entries[label_text] = entry
 
-        save_button = tk.Button(self.form, text="Save", width=15, command=lambda: self.save_commission(edit_id))
-        save_button.grid(row=len(labels), column=0, columnspan=2, pady=15)
+        save_button = ctk.CTkButton(
+            card,
+            text="Save",
+            command=lambda: self.save_commission(edit_id),
+            fg_color=BROWN,
+            hover_color=BROWN_DARK,
+            text_color=CREME,
+            corner_radius=14,
+            font=("Arial", 14, "bold"),
+            width=180,
+            height=42,
+        )
+        save_button.grid(row=len(labels), column=0, columnspan=2, pady=20)
+
+        card.grid_columnconfigure(0, weight=0)
+        card.grid_columnconfigure(1, weight=1)
 
         if edit_id is not None:
             self.prefill_form(edit_id)
@@ -74,21 +186,34 @@ class App:
         if not row:
             messagebox.showerror("Error", "Record not found.")
             return
-        # row = (id, client, title, type, price, deadline, status, notes)
+
         _, client, title, type_, price, deadline, status, notes = row
-        self.entries["Client Name"].delete(0, tk.END); self.entries["Client Name"].insert(0, client)
-        self.entries["Title"].delete(0, tk.END); self.entries["Title"].insert(0, title)
+
+        self.entries["Client Name"].delete(0, tk.END)
+        self.entries["Client Name"].insert(0, client)
+
+        self.entries["Title"].delete(0, tk.END)
+        self.entries["Title"].insert(0, title)
+
         try:
             self.entries["Type"].set(type_ if type_ else TYPE_OPTIONS[0])
         except Exception:
             pass
-        self.entries["Price ($)"].delete(0, tk.END); self.entries["Price ($)"].insert(0, str(price) if price else "")
-        self.entries["Deadline (YYYY-MM-DD)"].delete(0, tk.END); self.entries["Deadline (YYYY-MM-DD)"].insert(0, deadline if deadline else "")
+
+        self.entries["Price ($)"].delete(0, tk.END)
+        self.entries["Price ($)"].insert(0, str(price) if price else "")
+
+        self.entries["Deadline (YYYY-MM-DD)"].delete(0, tk.END)
+        self.entries["Deadline (YYYY-MM-DD)"].insert(0, deadline if deadline else "")
+
         try:
             self.entries["Status"].set(status if status else STATUS_OPTIONS[0])
         except Exception:
             pass
-        self.entries["Notes"].delete("1.0", tk.END); self.entries["Notes"].insert("1.0", notes if notes else "")
+
+        # CTkTextbox uses same "1.0" indexing as tk.Text
+        self.entries["Notes"].delete("1.0", tk.END)
+        self.entries["Notes"].insert("1.0", notes if notes else "")
 
     def save_commission(self, edit_id=None):
         try:
@@ -104,7 +229,7 @@ class App:
             if not client or not title:
                 messagebox.showerror("Validation Error", "Client and Title are required fields.")
                 return
-            # basic date format check
+
             if deadline:
                 try:
                     datetime.datetime.strptime(deadline, "%Y-%m-%d")
@@ -118,55 +243,57 @@ class App:
             else:
                 database.update_commission(edit_id, client, title, type_, price, deadline, status, notes)
                 messagebox.showinfo("Updated", "Commission updated successfully.")
+
             self.form.destroy()
-            # refresh view if open
+
             try:
                 self.refresh_table()
             except Exception:
                 pass
+
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save commission: {e}")
 
+    # View Page
     def open_view_page(self):
-        self.view_win = tk.Toplevel(self.root)
+        self.view_win = ctk.CTkToplevel(self.root)
         self.view_win.title("Commission List")
-        self.view_win.geometry("900x500")
+        self.setup_popup(self.view_win, 950, 520)
 
-        top_frame = tk.Frame(self.view_win)
-        top_frame.pack(fill="x", padx=10, pady=5)
+        top_frame = ctk.CTkFrame(self.view_win, fg_color="transparent")
+        top_frame.pack(fill="x", padx=10, pady=10)
 
-        tk.Label(top_frame, text="Filter by status:").pack(side="left")
-        self.status_var = tk.StringVar(value="All")
+        ctk.CTkLabel(top_frame, text="Filter by status:", text_color=BROWN_DARK).pack(side="left")
+        self.status_var = ctk.StringVar(value="All")
         status_options = ["All"] + STATUS_OPTIONS
-        status_menu = ttk.Combobox(top_frame, textvariable=self.status_var, values=status_options, state="readonly", width=15)
-        status_menu.pack(side="left", padx=5)
+        status_menu = ctk.CTkComboBox(
+            top_frame, values=status_options, variable=self.status_var, state="readonly", width=140
+        )
+        status_menu.pack(side="left", padx=8)
         status_menu.bind("<<ComboboxSelected>>", lambda e: self.refresh_table())
 
-        tk.Label(top_frame, text="   Sort by:").pack(side="left")
-
-        self.sort_var = tk.StringVar(value="deadline")
+        ctk.CTkLabel(top_frame, text="Sort by:", text_color=BROWN_DARK).pack(side="left", padx=(12, 0))
+        self.sort_var = ctk.StringVar(value="deadline")
         sort_options = ["deadline", "client", "price", "status", "title", "type", "id"]
-        sort_menu = ttk.Combobox(
-            top_frame,
-            textvariable=self.sort_var,
-            values=sort_options,
-            state="readonly",
-            width=12
+        sort_menu = ctk.CTkComboBox(
+            top_frame, values=sort_options, variable=self.sort_var, state="readonly", width=140
         )
-        sort_menu.pack(side="left", padx=5)
+        sort_menu.pack(side="left", padx=8)
         sort_menu.bind("<<ComboboxSelected>>", lambda e: self.refresh_table())
 
-        tk.Button(top_frame, text="Refresh", command=self.refresh_table).pack(side="left", padx=5)
-        tk.Button(top_frame, text="Mark Complete", command=self.mark_selected_complete).pack(side="left", padx=5)
-        tk.Button(top_frame, text="Edit Selected", command=self.edit_selected).pack(side="left", padx=5)
-        tk.Button(top_frame, text="Delete Selected", command=self.delete_selected).pack(side="left", padx=5)
+        self.themed_button(top_frame, "Refresh", self.refresh_table, width=110).pack(side="left", padx=8)
+        self.themed_button(top_frame, "Mark Complete", self.mark_selected_complete, width=140).pack(side="left", padx=8)
+        self.themed_button(top_frame, "Edit Selected", self.edit_selected, width=130).pack(side="left", padx=8)
+        self.themed_button(top_frame, "Delete Selected", self.delete_selected, width=130).pack(side="left", padx=8)
 
-        cols = ("id","client","title","type","price","deadline","status")
+        cols = ("id", "client", "title", "type", "price", "deadline", "status")
         self.tree = ttk.Treeview(self.view_win, columns=cols, show="headings")
+
         for c in cols:
             self.tree.heading(c, text=c.title())
-            self.tree.column(c, minwidth=50, width=120)
-        self.tree.pack(fill="both", expand=True, padx=10, pady=10)
+            self.tree.column(c, minwidth=50, width=130)
+
+        self.tree.pack(fill="both", expand=True, padx=12, pady=12)
 
         self.refresh_table()
 
@@ -181,9 +308,9 @@ class App:
 
         for r in rows:
             price_display = f"${r[4]:.2f}" if r[4] is not None else ""
-            self.tree.insert("", "end", values=(r[0], r[1], r[2], r[3], price_display, r[5], r[6]))    
+            self.tree.insert("", "end", values=(r[0], r[1], r[2], r[3], price_display, r[5], r[6]))
 
-
+    # Row Actions
     def get_selected_id(self):
         sel = self.tree.selection()
         if not sel:
@@ -213,46 +340,56 @@ class App:
             return
         self.open_add_form(edit_id=cid)
 
+    # Summary (with embedded pie chart) 
     def open_summary(self):
         total, completed, in_progress, not_started, income = database.get_summary()
         income_by_type = database.get_income_by_type()
 
-        summary_win = tk.Toplevel(self.root)
+        summary_win = ctk.CTkToplevel(self.root)
         summary_win.title("Summary Dashboard")
-        summary_win.geometry("500x600")
+        self.setup_popup(summary_win, 520, 650)
 
-        # ---- Text stats ----
-        tk.Label(summary_win, text="Summary Dashboard", font=("Arial", 16, "bold")).pack(pady=10)
+        card = ctk.CTkFrame(summary_win, fg_color=CREME_2, corner_radius=18)
+        card.pack(fill="both", expand=True, padx=20, pady=20)
 
-        tk.Label(summary_win, text=f"Total Commissions: {total}", font=("Arial", 12)).pack(pady=3)
-        tk.Label(summary_win, text=f"Not Started: {not_started}", font=("Arial", 12)).pack(pady=3)
-        tk.Label(summary_win, text=f"In Progress: {in_progress}", font=("Arial", 12)).pack(pady=3)
-        tk.Label(summary_win, text=f"Completed: {completed}", font=("Arial", 12)).pack(pady=3)
-        tk.Label(summary_win, text=f"Total Income (Completed): ${income:.2f}", font=("Arial", 12, "bold")).pack(pady=6)
+        ctk.CTkLabel(card, text="Summary Dashboard", font=("Arial", 18, "bold"),
+                     text_color=BROWN_DARK).pack(pady=(15, 10))
 
-        # ---- Pie chart section ----
-        chart_frame = tk.Frame(summary_win)
-        chart_frame.pack(fill="both", expand=True, pady=10)
+        stats = ctk.CTkFrame(card, fg_color=CREME, corner_radius=14)
+        stats.pack(fill="x", padx=15, pady=(0, 12))
+
+        def stat_line(text):
+            ctk.CTkLabel(stats, text=text, font=("Arial", 13), text_color=TEXT_DARK).pack(pady=4)
+
+        stat_line(f"Total Commissions: {total}")
+        stat_line(f"Not Started: {not_started}")
+        stat_line(f"In Progress: {in_progress}")
+        stat_line(f"Completed: {completed}")
+        stat_line(f"Total Income (Completed): ${income:.2f}")
+
+        chart_holder = ctk.CTkFrame(card, fg_color=CREME, corner_radius=14)
+        chart_holder.pack(fill="both", expand=True, padx=15, pady=10)
 
         if not income_by_type:
-            tk.Label(chart_frame, text="No completed commissions to display income chart.",
-                 font=("Arial", 11)).pack(pady=20)
+            ctk.CTkLabel(chart_holder, text="No completed commissions to chart yet.",
+                         text_color=BROWN, font=("Arial", 12)).pack(pady=25)
             return
 
         labels = [row[0] for row in income_by_type]
         values = [row[1] for row in income_by_type]
 
-        fig = Figure(figsize=(4.5, 4), dpi=100)
+        fig = Figure(figsize=(4.6, 4.2), dpi=100)
         ax = fig.add_subplot(111)
         ax.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
         ax.set_title("Income by Commission Type")
 
-        canvas = FigureCanvasTkAgg(fig, master=chart_frame)
+        canvas = FigureCanvasTkAgg(fig, master=chart_holder)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
+        canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = ctk.CTk()
     app = App(root)
     root.mainloop()
+
